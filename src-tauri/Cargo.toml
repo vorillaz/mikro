@@ -53,6 +53,7 @@ hostname = "0.4.0"
 rouille = "3.6.2"
 portpicker = "0.1.1"
 uuid = "1.8.0"
+md5 = "0.7.0"
 
 
 [features]

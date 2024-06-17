@@ -1,3 +1,4 @@
+use ffmpeg_sidecar::command::FfmpegCommand;
 use std::thread::JoinHandle;
 
 /// Filesystem proxy server with strictly limited permissions and auth required.

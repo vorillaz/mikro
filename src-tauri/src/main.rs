@@ -73,6 +73,7 @@ fn main() {
             host::get_hostname,
             utils::filestat,
             media::generate_video_thumbnail,
+            media::generate_timeline_thumbnails,
             media::get_duration,
             media::play_video,
             media::pause_video,
