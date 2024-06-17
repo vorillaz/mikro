@@ -1,14 +1,17 @@
 "use client";
 import React, { useState, useEffect } from "react";
-
+import { Uploader } from "@/components/uploader";
 import { CardButton } from "@/components/CardButton";
+import { Video } from "@/components/video";
 import { getVersion } from "@tauri-apps/api/app";
+import { Sanity } from "@/components/sanity";
+import { Files } from "@/components/files";
+import { DeviceSilent } from "@/components/device-silent";
 import { LOCALSTORAGE_VERSION_KEY } from "@/config/app";
 
 export default function Page() {
   const [loading, setLoading] = useState(true);
 
-  //   Todo permissions
   useEffect(() => {
     const checkVersion = async () => {
       const storedVersion = localStorage.getItem(LOCALSTORAGE_VERSION_KEY);
@@ -22,9 +25,21 @@ export default function Page() {
   }, []);
 
   return (
-    <div>
-      <h1>Page</h1>
-      <CardButton />
-    </div>
+    <>
+      <DeviceSilent />
+      <div className="flex-grow">
+        <Uploader />
+      </div>
+      <div className="w-80 max-w-80">
+        <Video />
+        <div>controls</div>
+        <hr />
+        <Files />
+        <hr />
+        <CardButton />
+        <hr />
+        <Sanity />
+      </div>
+    </>
   );
 }

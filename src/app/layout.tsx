@@ -1,5 +1,6 @@
 "use client";
 import "./styles.css";
+import { Store } from "../ctx/store";
 
 export default function RootLayout({
   children,
@@ -35,9 +36,15 @@ export default function RootLayout({
         />
         <meta name="msapplication-TileColor" content="#da532c" />
         <meta name="theme-color" content="#ffffff" />
-        <title>Cap Desktop App</title>
+        <title>Mikro</title>
       </head>
-      <body>{children}</body>
+      <body className="relative h-full">
+        <Store>
+          <div className="p-5 h-full">
+            <div className="flex flex-row gap-5 h-full">{children}</div>
+          </div>
+        </Store>
+      </body>
     </html>
   );
 }

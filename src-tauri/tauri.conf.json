@@ -8,11 +8,15 @@
     "withGlobalTauri": true
   },
   "package": {
-    "productName": "tauri-nextjs-template",
+    "productName": "Mikro",
     "version": "0.1.0"
   },
   "tauri": {
     "allowlist": {
+      "protocol": {
+        "asset": true,
+        "assetScope": ["**"]
+      },
       "window": {
         "all": true
       },
@@ -25,6 +29,9 @@
         "sidecar": true
       },
       "http": {
+        "all": true
+      },
+      "path": {
         "all": true
       },
       "dialog": {
@@ -42,6 +49,9 @@
         "removeFile": true,
         "renameFile": true,
         "exists": true
+      },
+      "notification": {
+        "all": true
       },
       "os": {
         "all": true
@@ -81,7 +91,7 @@
       }
     },
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost"
     },
     "updater": {
       "active": false
@@ -92,7 +102,9 @@
         "resizable": true,
         "title": "Mikro",
         "width": 1280,
-        "height": 800
+        "height": 800,
+        "minHeight": 580,
+        "minWidth": 650
       }
     ]
   }

@@ -19,12 +19,40 @@ ffmpeg-sidecar = "1.0.1"
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "1.6", features = [ "window-all", "global-shortcut-all", "fs-remove-file", "fs-read-dir", "fs-rename-file", "fs-exists", "fs-create-dir", "fs-read-file", "shell-open", "fs-copy-file", "fs-write-file", "dialog-all", "http-all", "fs-remove-dir", "shell-sidecar", "os-all"] }
+tauri = { version = "1.6", features = [
+    "protocol-asset",
+    "path-all",
+    "notification-all",
+    "window-all",
+    "global-shortcut-all",
+    "fs-remove-file",
+    "fs-read-dir",
+    "fs-rename-file",
+    "fs-exists",
+    "fs-create-dir",
+    "fs-read-file",
+    "shell-open",
+    "fs-copy-file",
+    "fs-write-file",
+    "dialog-all",
+    "http-all",
+    "fs-remove-dir",
+    "shell-sidecar",
+    "os-all",
+] }
 ffmpeg-sidecar = "1.0.1"
 window-vibrancy = "0.5.0"
 anyhow = "1.0.44"
 tokio = { version = "1.35.1", features = ["full"] }
 tokio-util = { version = "0.7.10", features = ["io"] }
+imagequant = "4.3.1"
+gifski = "1.32.0"
+mac_address = "1.1.7"
+machine-uid = "0.5.1"
+hostname = "0.4.0"
+rouille = "3.6.2"
+portpicker = "0.1.1"
+uuid = "1.8.0"
 
 
 [features]

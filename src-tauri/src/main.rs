@@ -1,7 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use anyhow::Result;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use ffmpeg_sidecar::{
     command::ffmpeg_is_installed,
@@ -10,17 +9,11 @@ use ffmpeg_sidecar::{
     version::ffmpeg_version,
 };
 
+mod host;
+mod localhost;
+mod media;
+mod sanity;
 mod utils;
-
-#[tauri::command]
-fn on_button_clicked() -> String {
-    let start = SystemTime::now();
-    let since_the_epoch = start
-        .duration_since(UNIX_EPOCH)
-        .expect("Time went backwards")
-        .as_millis();
-    format!("on_button_clicked sanity check from Rust! (timestamp: {since_the_epoch}ms)")
-}
 
 fn main() {
     std::panic::set_hook(Box::new(|info| {
@@ -63,7 +56,30 @@ fn main() {
     handle_ffmpeg_installation().expect("Failed to install FFmpeg");
 
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![on_button_clicked])
+        .setup(|app| {
+            let port = utils::get_tcp_port();
+            let token = utils::get_random_access_token();
+
+            print!(
+                "Starting localhost server on port {} with token {}",
+                port, token
+            );
+            localhost::spawn_localhost_server(port, token);
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            sanity::sanity_check,
+            host::get_machine_id,
+            host::get_hostname,
+            utils::filestat,
+            media::generate_video_thumbnail,
+            media::get_duration,
+            media::play_video,
+            media::pause_video,
+            media::stop_video,
+            utils::frontend_token,
+            utils::frontend_port,
+        ])
         .run(tauri::generate_context!())
         .expect("Error while running tauri application");
 }
