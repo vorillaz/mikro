@@ -141,6 +141,7 @@ dependencies = [
  "mac_address",
  "machine-uid",
  "md5",
+ "percent-encoding",
  "portpicker",
  "rouille",
  "serde",

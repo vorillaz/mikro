@@ -8,6 +8,13 @@ use ffmpeg_sidecar::{
     paths::sidecar_dir,
     version::ffmpeg_version,
 };
+use std::{
+    cmp::min,
+    io::{Read, Seek, SeekFrom},
+    path::PathBuf,
+};
+
+use tauri::http::{HttpRange, ResponseBuilder};
 
 mod host;
 mod localhost;
@@ -75,9 +82,6 @@ fn main() {
             media::generate_video_thumbnail,
             media::generate_timeline_thumbnails,
             media::get_duration,
-            media::play_video,
-            media::pause_video,
-            media::stop_video,
             utils::frontend_token,
             utils::frontend_port,
         ])

@@ -54,6 +54,7 @@ rouille = "3.6.2"
 portpicker = "0.1.1"
 uuid = "1.8.0"
 md5 = "0.7.0"
+percent-encoding = "2.3.1"
 
 
 [features]

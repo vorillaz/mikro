@@ -4,37 +4,8 @@ use std::{
     path::{Path, PathBuf},
     process::Command,
 };
-use uuid::Uuid;
-
 #[tauri::command]
-pub fn play_video() {
-    // let video_file = PathBuf::from(path);
-    // let video_file_str = video_file.to_string_lossy().into_owned();
-    // let mut ffmpeg = FfmpegCommand::new()
-    //     .realtime()
-    //     .format("lavfi")
-    //     .input(&video_file_str)
-    //     .codec_video("rawvideo")
-    //     .format("avi")
-    //     .output("-")
-    //     .spawn()
-    //     .unwrap();
-
-    // let mut ffplay = Command::new("ffplay")
-    //     .args("-i -".split(' '))
-    //     .stdin(Stdio::piped())
-    //     .spawn()
-    //     .unwrap();
-
-    // let mut ffmpeg_stdout = ffmpeg.take_stdout().unwrap();
-    // let mut ffplay_stdin = ffplay.stdin.take().unwrap();
-}
-
-#[tauri::command]
-pub fn pause_video() {}
-
-#[tauri::command]
-pub fn stop_video() {}
+pub async fn compress_video() {}
 
 #[tauri::command]
 pub fn get_duration(app: tauri::AppHandle, video_path: &str) -> Result<f64, String> {
@@ -60,6 +31,7 @@ pub fn get_duration(app: tauri::AppHandle, video_path: &str) -> Result<f64, Stri
 
     Ok(duration as f64)
 }
+
 #[tauri::command]
 pub async fn generate_timeline_thumbnails(
     app: tauri::AppHandle,
@@ -67,7 +39,7 @@ pub async fn generate_timeline_thumbnails(
 ) -> Result<Vec<String>, String> {
     // Split the video into 10 equal parts and generate thumbnails for each part
     let duration = get_duration(app, video_path).unwrap();
-    let parts = 10;
+    let parts = 20;
     let part_duration = duration / parts as f64;
 
     let mut thumbnails = vec![];
