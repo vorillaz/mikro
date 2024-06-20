@@ -6,7 +6,7 @@ import { createContext, useContext } from "use-context-selector";
 import { reducer } from "./reducer";
 
 interface Context {
-  dispatch: Dispatch<Action> | Dispatch<Promise<Action>>;
+  dispatch: Dispatch<Action>;
   state: MikroState;
 }
 

@@ -53,7 +53,13 @@ export const Uploader = () => {
       title: "Select a files ",
       filters: mediaFilters,
     });
-    console.log(result);
+    if (!result) {
+      return;
+    }
+    const res = typeof result === "string" ? [result] : result;
+    addFiles(res).then((action) => {
+      dispatch(action);
+    });
   };
   return (
     <div
@@ -64,13 +70,6 @@ export const Uploader = () => {
     >
       <div className="rounded-md border-[1px] flex w-full h-full items-center justify-center">
         <div>
-          <img
-            src={convertFileSrc(
-              "/Users/theodorevorillas/Desktop/demo-media/Photo_on_20-3-24_at_10.18_PM-removebg.png"
-            )}
-            alt=""
-          />
-
           {dndHover ? "Drop files here" : "Drag files here"}
           <button onClick={openFiles}>Open files</button>
         </div>

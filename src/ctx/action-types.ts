@@ -7,6 +7,7 @@ export enum ActionTypes {
   ADD_PORT = "mikro/add-port",
   ADD_HOSTNAME = "mikro/add-hostname",
   ADD_FILES = "mikro/add-files",
+  SET_FILE_PREVIEW = "mikro/set-file-preview",
   ADD_FILE = "mikro/add-file",
   REMOVE_FILE = "mikro/remove-file",
   REMOVE_ALL_FILES = "mikro/remove-all-files",
@@ -45,6 +46,18 @@ export type Action =
         files: mikroFile[];
       };
       type: ActionTypes.ADD_FILES;
+    }
+  | {
+      payload: {
+        fileId: string;
+      };
+      type: ActionTypes.SET_FILE_PREVIEW;
+    }
+  | {
+      payload: {
+        fileId: string;
+      };
+      type: ActionTypes.REMOVE_FILE;
     }
   | {
       payload: {

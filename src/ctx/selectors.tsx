@@ -13,6 +13,13 @@ export const getHostname = () => {
   return useContextSelector(Context, ({ state }) => state?.hostname);
 };
 
+export const getActiveFileId = () => {
+  return useContextSelector(Context, ({ state }) => {
+    const active = state?.filesToConvert?.find((file) => file.view);
+    return active?.id || null;
+  });
+};
+
 export const getFiles = () => {
   return useContextSelector(Context, ({ state }) => state?.filesToConvert);
 };

@@ -2,7 +2,8 @@ import { useEffect, useRef } from "react";
 import { useState } from "react";
 import { getAccessToken, getPort } from "src/ctx/selectors";
 import { invoke } from "@tauri-apps/api/tauri";
-import { Stream } from "./stream-example";
+import ReactPlayer from "react-player";
+import { convertFileSrc } from "@tauri-apps/api/tauri";
 
 export const Video = () => {
   const videoRef: any = useRef(null);
@@ -20,6 +21,7 @@ export const Video = () => {
     }).then((res) => {
       console.log("thumbnail", res);
       console.log(res);
+      setThumbnail(res);
     });
     invoke<string>("get_duration", {
       videoPath:
@@ -53,9 +55,32 @@ export const Video = () => {
   }, [port, token]);
   return (
     <div>
+      <img src={convertFileSrc(thumbnail)} />
+      <ReactPlayer
+        controls={true}
+        stopOnUnmount={true}
+        ref={videoRef}
+        onReady={() => videoRef.current?.seekTo(10)}
+        onError={(error) => console.error("error", error)}
+        url={[
+          `http://localhost:${port}//Users/theodorevorillas/Desktop/demo-media/file_example_WMV_480_1_2MB.mp4?access_token=${token}`,
+        ]}
+      />
+      {/* <RcDPlayer
+        src="stream://localhost//Users/theodorevorillas/Desktop/demo-media/sample_1280x720_surfing_with_audio.flv"
+        mseType={MseType.flv}
+        onLoad={(dp) => {
+          console.log("DPlayer instance", dp);
+        }}
+        onError={(event) => {
+          console.error("error", event);
+        }}
+      /> */}
+      {/* <RcDPlayer 
       <video controls className="img" muted>
         <source src={videoUrl} type="video/quicktime" />
       </video>
+      */}
     </div>
   );
 };

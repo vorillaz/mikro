@@ -8,6 +8,7 @@ export type mikroFile = {
   path: string;
   name: string;
   type: fileType;
+  view?: boolean; // picked in the view
   id: string;
   fileSize: number; // in bytes
   videoDuration?: number; // in seconds

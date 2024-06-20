@@ -5,7 +5,6 @@ import {
   requestPermission,
   sendNotification,
 } from "@tauri-apps/api/notification";
-import { getFrames } from "src/lib/video";
 
 import type { WebviewWindow } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/tauri";

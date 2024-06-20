@@ -40,6 +40,24 @@ export const addHostname = (hostname: string): Action => {
   };
 };
 
+export const previewFile = (fileId: string): Action => {
+  return {
+    type: ActionTypes.SET_FILE_PREVIEW,
+    payload: {
+      fileId,
+    },
+  };
+};
+
+export const removeFile = (fileId: string): Action => {
+  return {
+    type: ActionTypes.REMOVE_FILE,
+    payload: {
+      fileId,
+    },
+  };
+};
+
 export const addFiles = async (files: string[]): Promise<Action> => {
   const acceptedFiles = files.filter((file) => !isNotAccepted(file));
   if (acceptedFiles.length === 0) {

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { FileExplorer } from "@/components/file-explorer";
 import { Uploader } from "@/components/uploader";
-import { CardButton } from "@/components/CardButton";
 import { Video } from "@/components/video";
 import { getVersion } from "@tauri-apps/api/app";
 import { Sanity } from "@/components/sanity";
@@ -31,14 +31,7 @@ export default function Page() {
         <Uploader />
       </div>
       <div className="w-80 max-w-80">
-        <Video />
-        <div>controls</div>
-        <hr />
-        <Files />
-        <hr />
-        <CardButton />
-        <hr />
-        <Sanity />
+        <FileExplorer />
       </div>
     </>
   );
