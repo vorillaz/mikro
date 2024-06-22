@@ -4,12 +4,14 @@ export type passedFile = {
   size: number;
   name: number;
 };
+export type Frame = { id: string; src: string };
 export type mikroFile = {
   path: string;
   name: string;
   type: fileType;
   view?: boolean; // picked in the view
   id: string;
+  frames: Frame[];
   fileSize: number; // in bytes
   videoDuration?: number; // in seconds
   trimmed?: boolean;

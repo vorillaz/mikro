@@ -1,8 +1,8 @@
 import { useCallback } from "react";
 import { getFiles, getActiveFileId } from "src/ctx/selectors";
 import { bytesToHuman } from "@/utils/media";
-import { View } from "./icons/view";
-import { Close } from "./icons/close";
+import { View, Close } from "./icons/actions";
+
 import { useDispatcher } from "../ctx/store";
 import { previewFile, removeFile } from "../ctx/actions";
 

@@ -3,7 +3,7 @@ export enum VideoToFramesMethod {
   totalFrames,
 }
 
-export type Frame = { id: string; src: string };
+import { Frame } from "../ctx/state";
 
 export class VideoToFrames {
   public static getFrames(
@@ -17,7 +17,7 @@ export class VideoToFrames {
       const context = canvas.getContext("2d")!;
       let duration = 0;
 
-      const video = document.createElement("video");
+      const video = document.getElementById("get-frames") as HTMLVideoElement;
       video.preload = "auto";
 
       video.addEventListener("loadeddata", async () => {

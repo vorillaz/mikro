@@ -1,9 +1,14 @@
 use ffmpeg_sidecar::command::FfmpegCommand;
+use md5::Digest;
 use std::{
+    borrow::Borrow,
     env,
     path::{Path, PathBuf},
     process::Command,
+    vec,
 };
+use tokio;
+
 #[tauri::command]
 pub async fn compress_video() {}
 
@@ -32,6 +37,46 @@ pub fn get_duration(app: tauri::AppHandle, video_path: &str) -> Result<f64, Stri
     Ok(duration as f64)
 }
 
+async fn thumb(part: f64, index: usize, v_path: String) -> Result<String, String> {
+    print!("thumb number {} \n", index);
+    let p = v_path.clone();
+    let tmp: PathBuf = env::temp_dir();
+    let digest = md5::compute(p);
+    let start = index as f64 * part;
+    let file_name = format!("{:x}_{}.jpg", digest, index);
+    let output_path: PathBuf = [tmp.clone(), PathBuf::from(&file_name)].iter().collect();
+    let errors = FfmpegCommand::new()
+        .args([
+            "-i",
+            v_path.borrow(),
+            "-ss",
+            &start.to_string(),
+            "-vf",
+            "scale=1080:720:force_original_aspect_ratio=decrease",
+            "-vframes",
+            "1",
+            &output_path.display().to_string(),
+            "-y",
+        ])
+        .spawn()
+        .unwrap()
+        .iter()
+        .unwrap()
+        .filter_errors()
+        .count();
+
+    if (errors > 0) {
+        return Err("Failed to generate thumbnail".into());
+    }
+
+    print!("thumb number {} done \n", index);
+    Ok(output_path.display().to_string())
+}
+
+async fn boom(part: f64, index: usize, v_path: String) -> Result<String, String> {
+    Ok("".to_string())
+}
+
 #[tauri::command]
 pub async fn generate_timeline_thumbnails(
     app: tauri::AppHandle,
@@ -42,42 +87,23 @@ pub async fn generate_timeline_thumbnails(
     let parts = 20;
     let part_duration = duration / parts as f64;
 
-    let mut thumbnails = vec![];
-    let digest = md5::compute(video_path);
+    let mut thumbnails = Vec::new();
+
+    let mut handles = Vec::new();
+    let path = video_path.to_string();
 
     for i in 0..parts {
-        let start = i as f64 * part_duration;
-        let file_name = format!("{:x}_{}.jpg", digest, i);
-
-        let tmp = env::temp_dir();
-        let output_path: PathBuf = [tmp.clone(), PathBuf::from(&file_name)].iter().collect();
-
-        let errors = FfmpegCommand::new()
-            .args([
-                "-i",
-                video_path,
-                "-ss",
-                &start.to_string(),
-                "-vf",
-                "scale=1080:720:force_original_aspect_ratio=decrease",
-                "-vframes",
-                "1",
-                &output_path.display().to_string(),
-                "-y",
-            ])
-            .spawn()
-            .unwrap()
-            .iter()
-            .unwrap()
-            .filter_errors()
-            .count();
-
-        if (errors > 0) {
-            return Err("Failed to generate thumbnail".into());
-        }
-
-        thumbnails.push(output_path.display().to_string());
+        let job = tokio::spawn(thumb(part_duration, i, path.clone()));
+        handles.push(job);
+        // thumbnails.push(output_path.display().to_string());
     }
+
+    for job in handles {
+        thumbnails.push(job.await.unwrap()?);
+    }
+
+    print!("thumbs");
+    print!("{:?}", thumbnails);
 
     Ok(thumbnails)
 }

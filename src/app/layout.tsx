@@ -1,6 +1,10 @@
 "use client";
 import "./styles.css";
+import Script from "next/script";
 import { Store } from "../ctx/store";
+
+const env = process.env.NEXT_PUBLIC_ENV;
+const version = process.env.NEXT_PUBLIC_VERSION;
 
 export default function RootLayout({
   children,
@@ -20,6 +24,19 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#da532c" />
         <meta name="theme-color" content="#ffffff" />
         <title>Mikro</title>
+
+        <Script
+          src={`/scripts/accessibility-only-when-focused.js?nonce=${version}`}
+          data-env={env}
+        />
+        <Script
+          src={`/scripts/disable-zoom.js?nonce=${version}`}
+          data-env={env}
+        />
+        <Script
+          src={`/scripts/disable-reload.js?nonce=${version}`}
+          data-env={env}
+        />
       </head>
       <body className="relative h-full">
         <Store>

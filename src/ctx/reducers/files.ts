@@ -3,6 +3,24 @@ import { MikroState } from "../state";
 
 export const fileReducer = (state: MikroState, action: Action): MikroState => {
   switch (action.type) {
+    case ActionTypes.SET_FRAMES:
+      const fId = action.payload.fileId;
+      const frames = action.payload.frames;
+
+      const filesWithFrames = state.filesToConvert.map((file) => {
+        if (file.id === fId) {
+          return {
+            ...file,
+            frames,
+          };
+        }
+        return file;
+      });
+
+      return {
+        ...state,
+        filesToConvert: [...filesWithFrames],
+      };
     case ActionTypes.REMOVE_FILE:
       // Remove the file from the list
       // if the file it has the view flag set to true then set the next file to view

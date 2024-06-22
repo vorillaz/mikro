@@ -10,6 +10,10 @@ const { version } = packageJson;
 const nextConfig = {
   reactStrictMode: false,
   swcMinify: true,
+  env: {
+    NEXT_PUBLIC_VERSION: version,
+    NEXT_PUBLIC_ENV: process.env.NODE_ENV,
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },

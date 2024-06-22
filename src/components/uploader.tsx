@@ -23,9 +23,6 @@ export const Uploader = () => {
         console.log("hovering");
       }
       if (event.payload.type === "drop") {
-        console.log(event);
-        console.log(event.payload.paths);
-
         addFiles(event.payload.paths).then((action) => {
           dispatch(action);
         });
