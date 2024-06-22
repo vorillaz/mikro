@@ -1,16 +1,15 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
+import { Preview } from "@/components/preview";
 import { FileExplorer } from "@/components/file-explorer";
+import { hasFiles } from "src/ctx/selectors";
 import { Uploader } from "@/components/uploader";
-import { Video } from "@/components/video";
 import { getVersion } from "@tauri-apps/api/app";
-import { Sanity } from "@/components/sanity";
-import { Files } from "@/components/files";
 import { DeviceSilent } from "@/components/device-silent";
 import { LOCALSTORAGE_VERSION_KEY } from "@/config/app";
 
 export default function Page() {
-  const [loading, setLoading] = useState(true);
+  const hasAnyFiles = hasFiles();
 
   useEffect(() => {
     const checkVersion = async () => {
@@ -25,14 +24,21 @@ export default function Page() {
   }, []);
 
   return (
-    <>
+    <div className="flex h-full w-full">
       <DeviceSilent />
-      <div className="flex-grow">
-        <Uploader />
-      </div>
-      <div className="w-80 max-w-80">
-        <FileExplorer />
-      </div>
-    </>
+      {!hasAnyFiles && (
+        <div className="flex-grow">
+          <Uploader />
+        </div>
+      )}
+      {hasAnyFiles && (
+        <div className="flex-grow flex gap-5">
+          <Preview />
+          <div className="w-80 max-w-80">
+            <FileExplorer />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

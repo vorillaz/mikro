@@ -14,8 +14,6 @@ export const Uploader = () => {
   const [appWindow, setAppWindow] = useState<WebviewWindow>();
   const dropEvent = useRef<Promise<UnlistenFn> | null>(null);
 
-  const onFilesPicked = (files: string[]) => {};
-
   async function setupAppWindow() {
     const appWindow = (await import("@tauri-apps/api/window")).appWindow;
     // add drop event listener

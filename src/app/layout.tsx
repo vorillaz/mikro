@@ -24,7 +24,7 @@ export default function RootLayout({
       <body className="relative h-full">
         <Store>
           <div className="p-5 h-full">
-            <div className="flex flex-row gap-5 h-full">{children}</div>
+            <div className="flex h-full">{children}</div>
           </div>
         </Store>
       </body>

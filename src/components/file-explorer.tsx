@@ -31,14 +31,11 @@ export const FileExplorer = () => {
 
   return (
     <div>
-      <b>
-        Active file: <i>{activeFileId}</i>
-      </b>
       {files.map((file) => {
         return (
-          <div key={file.id}>
+          <div key={file.id} className="flex">
             <div
-              className="cursor-pointer"
+              className="cursor-pointer flex items-center gap-2"
               onClick={() => setActiveFile(file?.id)}
             >
               {activeFileId === file.id && <View />}
