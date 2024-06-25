@@ -1,21 +1,29 @@
-use ffmpeg_sidecar::command::FfmpegCommand;
-use md5::Digest;
+use anyhow::Result;
+use ffmpeg_sidecar::{
+    command::FfmpegCommand,
+    event::{FfmpegEvent, LogLevel},
+};
+use serde::Serialize;
 use std::{
-    borrow::Borrow,
     env,
     path::{Path, PathBuf},
     process::Command,
-    vec,
 };
-use tokio;
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ThumbnailData {
+    index: i16,
+    path: String,
+}
 
 #[tauri::command]
 pub async fn compress_video() {}
 
-#[tauri::command]
-pub fn get_duration(app: tauri::AppHandle, video_path: &str) -> Result<f64, String> {
+#[tauri::command(async)]
+pub async fn get_duration(app: tauri::AppHandle, video_path: &str) -> Result<f32, String> {
     if !Path::exists(Path::new(video_path)) {
-        return Err("Path not found".into());
+        return Err("Path not found".to_owned().to_string());
     }
 
     let output = Command::new("ffprobe")
@@ -29,87 +37,107 @@ pub fn get_duration(app: tauri::AppHandle, video_path: &str) -> Result<f64, Stri
             video_path,
         ])
         .output()
-        .expect("Failed to execute command");
+        .map_err(|e| format!("Failed to run ffprobe: {}", e))?;
 
-    let duration = String::from_utf8(output.stdout).unwrap_or_else(|_| "".to_string());
-    let duration: f64 = duration.trim().parse::<f64>().unwrap();
+    if !output.status.success() {
+        return Err(format!(
+            "ffprobe exited with non-zero status: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+    let info = String::from_utf8_lossy(&output.stdout);
+    let d = info.trim().parse::<f32>().unwrap();
 
-    Ok(duration as f64)
+    // ceil to one decimal place
+    let duration = (d * 10.0).ceil() / 10.0;
+    Ok(duration)
 }
 
-async fn thumb(part: f64, index: usize, v_path: String) -> Result<String, String> {
-    print!("thumb number {} \n", index);
-    let p = v_path.clone();
-    let tmp: PathBuf = env::temp_dir();
-    let digest = md5::compute(p);
-    let start = index as f64 * part;
-    let file_name = format!("{:x}_{}.jpg", digest, index);
+#[tauri::command(async)]
+pub async fn generate_timeline_thumbnail(
+    _app: tauri::AppHandle,
+    video_path: &str,
+    index: i16,
+    duration: i16,
+    frames: i16,
+) -> Result<ThumbnailData, String> {
+    if !Path::exists(Path::new(video_path)) {
+        return Err("Path not found".into());
+    }
+    let digest = md5::compute(video_path);
+    let tmp = env::temp_dir();
+    let next = index + 1;
+    let file_name = format!("{:x}-_{}.jpg", digest, next);
     let output_path: PathBuf = [tmp.clone(), PathBuf::from(&file_name)].iter().collect();
-    let errors = FfmpegCommand::new()
-        .args([
-            "-i",
-            v_path.borrow(),
+    let thumb = ThumbnailData {
+        index: index,
+        path: output_path.display().to_string(),
+    };
+
+    // Check if the file already exists
+    if Path::exists(Path::new(&output_path)) {
+        return Ok(thumb);
+    }
+
+    // Generate the thumbnail
+
+    let sub = f64::from(next) - 0.5;
+    let ftime = (sub * f64::from(duration) / f64::from(frames));
+    let time = ftime.floor() as i16;
+
+    let pict = format!(r##"select="eq(pict_type\,I)""##);
+
+    print!(
+        "args {}",
+        [
             "-ss",
-            &start.to_string(),
+            &time.to_string(),
+            "-i",
+            video_path,
             "-vf",
-            "scale=1080:720:force_original_aspect_ratio=decrease",
+            &pict,
+            "-vframes",
+            "1",
+            &output_path.display().to_string(),
+            "-y",
+        ]
+        .join(" ")
+        .to_string()
+    );
+
+    let exec = FfmpegCommand::new()
+        .args([
+            "-ss",
+            &time.to_string(),
+            "-i",
+            video_path,
+            "-vf",
+            "select=eq(pict_type\\,I)",
             "-vframes",
             "1",
             &output_path.display().to_string(),
             "-y",
         ])
+        .create_no_window()
         .spawn()
+        .map_err(|e| format!("Failed to run ffmpeg: {}", e))
         .unwrap()
         .iter()
         .unwrap()
-        .filter_errors()
-        .count();
+        .for_each(|e| match e {
+            FfmpegEvent::Log(LogLevel::Error, e) => println!("Error: {}", e),
+            FfmpegEvent::Progress(p) => println!("Progress: {}", p.time),
+            _ => {}
+        });
 
-    if (errors > 0) {
-        return Err("Failed to generate thumbnail".into());
-    }
-
-    print!("thumb number {} done \n", index);
-    Ok(output_path.display().to_string())
+    return Ok(thumb);
 }
 
-async fn boom(part: f64, index: usize, v_path: String) -> Result<String, String> {
-    Ok("".to_string())
-}
-
-#[tauri::command]
-pub async fn generate_timeline_thumbnails(
+#[tauri::command(async)]
+pub async fn generate_video_thumbnail(
     app: tauri::AppHandle,
     video_path: &str,
-) -> Result<Vec<String>, String> {
-    // Split the video into 10 equal parts and generate thumbnails for each part
-    let duration = get_duration(app, video_path).unwrap();
-    let parts = 20;
-    let part_duration = duration / parts as f64;
-
-    let mut thumbnails = Vec::new();
-
-    let mut handles = Vec::new();
-    let path = video_path.to_string();
-
-    for i in 0..parts {
-        let job = tokio::spawn(thumb(part_duration, i, path.clone()));
-        handles.push(job);
-        // thumbnails.push(output_path.display().to_string());
-    }
-
-    for job in handles {
-        thumbnails.push(job.await.unwrap()?);
-    }
-
-    print!("thumbs");
-    print!("{:?}", thumbnails);
-
-    Ok(thumbnails)
-}
-
-#[tauri::command]
-pub fn generate_video_thumbnail(app: tauri::AppHandle, video_path: &str) -> Result<String, String> {
+) -> Result<String, String> {
     if !Path::exists(Path::new(video_path)) {
         return Err("Path not found".into());
     }
@@ -122,10 +150,12 @@ pub fn generate_video_thumbnail(app: tauri::AppHandle, video_path: &str) -> Resu
 
     let errors = FfmpegCommand::new()
         .args([
-            "-i",
-            video_path,
             "-ss",
             "00:00:01.00",
+            "-i",
+            video_path,
+            "-threads",
+            "2",
             "-vf",
             "scale=1080:720:force_original_aspect_ratio=decrease",
             "-vframes",
@@ -143,6 +173,6 @@ pub fn generate_video_thumbnail(app: tauri::AppHandle, video_path: &str) -> Resu
     if (errors > 0) {
         return Err("Failed to generate thumbnail".into());
     }
-
-    Ok(output_path.display().to_string())
+    let out = output_path.display().to_string();
+    Ok(out)
 }

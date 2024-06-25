@@ -16,6 +16,8 @@
   },
   "packageManager": "pnpm@8.10.5",
   "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.10",
+    "@ffmpeg/util": "^0.12.1",
     "@tauri-apps/api": "^1.5.6",
     "clsx": "^2.1.0",
     "lodash": "^4.17.21",
@@ -23,6 +25,7 @@
     "million": "^3.0.6",
     "next": "^14.2.4",
     "next-themes": "^0.3.0",
+    "p-map": "^7.0.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-player": "^2.16.0",

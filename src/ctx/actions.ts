@@ -58,6 +58,16 @@ export const removeFile = (fileId: string): Action => {
   };
 };
 
+export const addDuration = (duration: number, fileId: string): Action => {
+  return {
+    type: ActionTypes.SET_DURATION,
+    payload: {
+      duration,
+      fileId,
+    },
+  };
+};
+
 export const addFiles = async (files: string[]): Promise<Action> => {
   const acceptedFiles = files.filter((file) => !isNotAccepted(file));
   if (acceptedFiles.length === 0) {

@@ -68,7 +68,6 @@ pub fn frontend_token() -> String {
 
 #[tauri::command]
 pub fn filestat(filename: &str) -> Result<String, String> {
-    use std::fmt::format;
     use std::fs;
     use std::time::UNIX_EPOCH;
 

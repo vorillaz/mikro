@@ -10,6 +10,7 @@ export enum ActionTypes {
   SET_FILE_PREVIEW = "mikro/set-file-preview",
   ADD_FILE = "mikro/add-file",
   SET_FRAMES = "mikro/set-frames",
+  SET_DURATION = "mikro/set-duration",
   REMOVE_FILE = "mikro/remove-file",
   REMOVE_ALL_FILES = "mikro/remove-all-files",
 }
@@ -66,6 +67,13 @@ export type Action =
         frames: mikroFile["frames"];
       };
       type: ActionTypes.SET_FRAMES;
+    }
+  | {
+      payload: {
+        duration: number;
+        fileId: string;
+      };
+      type: ActionTypes.SET_DURATION;
     }
   | {
       payload: {

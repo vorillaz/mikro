@@ -14,7 +14,7 @@ export const DeviceSilent = () => {
     invoke<string>("get_machine_id").then((value) => {
       dispatch(addMachineId(value));
     });
-    invoke<number>("frontend_port").then((value) => {
+    invoke<string>("frontend_port").then((value) => {
       dispatch(addPort(parseInt(value)));
     });
     invoke<string>("frontend_token").then((value) => {

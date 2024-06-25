@@ -3,6 +3,25 @@ import { MikroState } from "../state";
 
 export const fileReducer = (state: MikroState, action: Action): MikroState => {
   switch (action.type) {
+    case ActionTypes.SET_DURATION:
+      const durId = action.payload.fileId;
+      const duration = action.payload.duration;
+
+      const filesWithDuration = state.filesToConvert.map((file) => {
+        if (file.id === durId) {
+          return {
+            ...file,
+            videoDuration: duration,
+          };
+        }
+        return file;
+      });
+
+      return {
+        ...state,
+        filesToConvert: [...filesWithDuration],
+      };
+
     case ActionTypes.SET_FRAMES:
       const fId = action.payload.fileId;
       const frames = action.payload.frames;

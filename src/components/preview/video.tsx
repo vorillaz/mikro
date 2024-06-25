@@ -1,19 +1,22 @@
 import {
   useRef,
   useState,
-  type ComponentProps,
+  useEffect,
   type FormEventHandler,
   type MouseEventHandler,
   type ReactEventHandler,
 } from "react";
 import { Frames } from "./frames";
 import { Play as PlayIcon, Pause as PauseIcon } from "../icons/media";
+import { invoke } from "@tauri-apps/api";
 
-import { getAccessToken, getPort } from "src/ctx/selectors";
+import { getAccessToken, getPort, getActiveFile } from "src/ctx/selectors";
 import { useToggle } from "@/hooks/use-toggle";
 import { useDebounced } from "@/hooks/use-debounced";
 import { useEventListener } from "@/hooks/use-event-listener";
 import { cn, formatTime } from "@/utils/helpers";
+import { addDuration } from "../../ctx/actions";
+import { useDispatcher } from "../../ctx/store";
 
 export const VideoPreview = ({ src }: { src: string }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -29,6 +32,18 @@ export const VideoPreview = ({ src }: { src: string }) => {
 
   const token = getAccessToken();
   const port = getPort();
+  const file = getActiveFile();
+  const { dispatch } = useDispatcher();
+
+  useEffect(() => {
+    if (!src || !file?.id) return;
+
+    invoke<number>("get_duration", { videoPath: src })
+      .then((duration) => {
+        dispatch(addDuration(duration, file?.id));
+      })
+      .catch((e) => {});
+  }, [src, file?.id]);
 
   const togglePlay = (): void => {
     isPlaying ? videoRef.current?.pause() : videoRef.current?.play();
@@ -181,7 +196,7 @@ export const VideoPreview = ({ src }: { src: string }) => {
         <div
           ref={trimmerRef}
           id="trimmer"
-          className="absolute bottom-0 h-[64px] cursor-grab border-b-4 border-t-4 border-white shadow"
+          className="absolute bottom-0 h-[64px] cursor-grab border-b-4 border-t-4 border-yellow shadow"
           style={{ left: `${start}%`, width: `${end - start}%` }}
         >
           <div
@@ -189,7 +204,7 @@ export const VideoPreview = ({ src }: { src: string }) => {
             onMouseUp={trimVideo}
             ref={trimStartRef}
             id="trim-start"
-            className="group absolute -bottom-1 -top-1 z-20 w-5 cursor-ew-resize rounded-[0.75rem_0_0_0.75rem] border-b-0 border-r-0 border-t-0 bg-white"
+            className="group absolute -bottom-1 -top-1 z-20 w-5 cursor-ew-resize rounded-[0.75rem_0_0_0.75rem] border-b-0 border-r-0 border-t-0 bg-yellow"
             style={{ left: "-16px" }}
           >
             <div className="pointer-events-none absolute left-[8px] top-5 block h-6 w-1 rounded-[2px] bg-card/20 transition-all group-active:scale-y-[1.1] group-active:bg-card" />
@@ -199,7 +214,7 @@ export const VideoPreview = ({ src }: { src: string }) => {
             onMouseUp={trimVideo}
             ref={trimEndRef}
             id="trim-end"
-            className="group absolute -bottom-1 -top-1 z-20 w-5 cursor-ew-resize rounded-[0_0.75rem_0.75rem_0] border-b-0 border-l-0 border-t-0 bg-white"
+            className="group absolute -bottom-1 -top-1 z-20 w-5 cursor-ew-resize rounded-[0_0.75rem_0.75rem_0] border-b-0 border-l-0 border-t-0 bg-yellow"
             style={{ right: "-16px" }}
           >
             <div className="pointer-events-none absolute left-[8px] top-5 block h-6 w-1 rounded-[2px] bg-card/20 transition-all group-active:scale-y-[1.1] group-active:bg-card" />
@@ -220,7 +235,7 @@ export const VideoPreview = ({ src }: { src: string }) => {
         />
         <div className="flex justify-between overflow-clip rounded-xl w-full">
           <div className="flex justify-between w-full">
-            <Frames src={src} />
+            <Frames video={videoRef} src={src} />
           </div>
         </div>
       </div>

@@ -26,6 +26,13 @@ export const getActiveFileId = () => {
   });
 };
 
+export const getActiveFileDuration = () => {
+  return useContextSelector(Context, ({ state }) => {
+    const active = state?.filesToConvert?.find((file) => file.view);
+    return active?.videoDuration || null;
+  });
+};
+
 export const getFiles = () => {
   return useContextSelector(Context, ({ state }) => state?.filesToConvert);
 };
