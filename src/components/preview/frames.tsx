@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { convertFileSrc } from "@tauri-apps/api/tauri";
 import { getActiveFileDuration, getActiveFile } from "src/ctx/selectors";
 import { FRAME_COUNT } from "@/utils/media";
+import { debounce } from "@/utils/helpers";
 import pMap from "p-map";
 
 const SUB = 23;
@@ -29,8 +30,16 @@ export const Frames = ({
   useEffect(() => {
     if (!duration) return;
     // Loop and get frames with promise all
-    loadImgs();
+    const debounced = debounce(() => {
+      loadImgs();
+    }, 100);
+
+    const obs = new ResizeObserver(debounced);
+    obs.observe(wrapRef.current);
+
     return () => {
+      wrapRef?.current && obs?.unobserve(wrapRef.current);
+      obs?.disconnect();
       // cleanup
       const context = canvasRef?.current?.getContext("2d");
       if (context) {
