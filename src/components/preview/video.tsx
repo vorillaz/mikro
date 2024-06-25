@@ -9,8 +9,6 @@ import { Frames } from "./frames";
 import { Play as PlayIcon, Pause as PauseIcon } from "../icons/media";
 import { invoke } from "@tauri-apps/api";
 
-import { FFmpeg } from "@ffmpeg/ffmpeg";
-
 import { getAccessToken, getPort, getActiveFile } from "src/ctx/selectors";
 import { useToggle } from "@/hooks/use-toggle";
 import { useDebounced } from "@/hooks/use-debounced";
@@ -73,7 +71,7 @@ export const VideoPreview = ({ src }: { src: string }) => {
     };
 
     const onTimeUpdate = () => {
-      updateSeek();
+      requestAnimationFrame(updateSeek);
     };
 
     videoRef?.current?.addEventListener("timeupdate", onTimeUpdate);
@@ -81,6 +79,8 @@ export const VideoPreview = ({ src }: { src: string }) => {
 
     return () => {
       videoRef.current?.pause();
+      videoRef.current?.removeEventListener("timeupdate", onTimeUpdate);
+      videoRef.current?.removeEventListener("seeked", onTimeUpdate);
       setIsPlaying(false);
     };
   }, [videoRef]);
@@ -156,24 +156,24 @@ export const VideoPreview = ({ src }: { src: string }) => {
     }
   });
 
-  useEventListener(
-    "timeupdate",
-    () => {
-      if (!videoRef.current || !seekRef.current) return;
-      const video = videoRef.current;
-      const seek = seekRef.current;
-      const videoStart = (video.duration * start) / 100;
-      if (seek.valueAsNumber >= end) {
-        video.currentTime = videoStart;
-      } else if (video.currentTime < videoStart) {
-        video.currentTime = videoStart;
-      }
-    },
-    videoRef,
-    {
-      passive: true,
-    }
-  );
+  // useEventListener(
+  //   "timeupdate",
+  //   () => {
+  //     if (!videoRef.current || !seekRef.current) return;
+  //     const video = videoRef.current;
+  //     const seek = seekRef.current;
+  //     const videoStart = (video.duration * start) / 100;
+  //     if (seek.valueAsNumber >= end) {
+  //       video.currentTime = videoStart;
+  //     } else if (video.currentTime < videoStart) {
+  //       video.currentTime = videoStart;
+  //     }
+  //   },
+  //   videoRef,
+  //   {
+  //     passive: true,
+  //   }
+  // );
 
   return (
     <div
