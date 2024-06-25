@@ -4,7 +4,6 @@ import {
   useEffect,
   type FormEventHandler,
   type MouseEventHandler,
-  type ReactEventHandler,
 } from "react";
 import { Frames } from "./frames";
 import { Play as PlayIcon, Pause as PauseIcon } from "../icons/media";
@@ -20,6 +19,7 @@ import { useDispatcher } from "../../ctx/store";
 
 export const VideoPreview = ({ src }: { src: string }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const seekRef = useRef<HTMLInputElement>(null);
   const trimmerRef = useRef<HTMLDivElement>(null);
   const trimStartRef = useRef<HTMLDivElement>(null);
@@ -55,7 +55,9 @@ export const VideoPreview = ({ src }: { src: string }) => {
     setIsPlaying(true);
   };
 
-  const syncSeekWithVideoValue: ReactEventHandler<HTMLVideoElement> = () => {
+  useEffect(() => {
+    if (!videoRef.current) return;
+
     const updateSeek = () => {
       if (!seekRef.current || !videoRef.current) return;
       const seek = seekRef.current;
@@ -67,24 +69,32 @@ export const VideoPreview = ({ src }: { src: string }) => {
       seek.style.setProperty("--label-position", `${thumbPosition}px`);
     };
 
-    const animateSeek = () => {
+    const onTimeUpdate = () => {
       updateSeek();
-      if (isPlaying) {
-        requestAnimationFrame(animateSeek);
-      }
     };
 
-    if (isPlaying) {
-      requestAnimationFrame(animateSeek);
-    }
-  };
+    videoRef?.current?.addEventListener("timeupdate", onTimeUpdate);
+    videoRef?.current?.addEventListener("seeked", onTimeUpdate);
+
+    return () => {
+      videoRef.current?.pause();
+      setIsPlaying(false);
+    };
+  }, [videoRef]);
 
   const syncVideoWithSeekValue: FormEventHandler<HTMLInputElement> = () => {
     if (!seekRef.current || !videoRef.current) return;
     const seek = seekRef.current;
     const video = videoRef.current;
     const time = video.duration * (Number(seek.value) / 100);
-    video.currentTime = time;
+    const videoStart = (video.duration * start) / 100;
+    if (seek.valueAsNumber >= end) {
+      video.currentTime = videoStart;
+    } else if (video.currentTime < videoStart) {
+      video.currentTime = videoStart;
+    } else {
+      video.currentTime = time;
+    }
   };
 
   const onMouseDown: MouseEventHandler<HTMLInputElement> = () => {
@@ -92,20 +102,21 @@ export const VideoPreview = ({ src }: { src: string }) => {
     setIsPlaying(false);
   };
 
-  const onMouseUp: MouseEventHandler<HTMLInputElement> = useDebounced(() => {
-    play();
-  }, 350);
+  const onMouseUp: MouseEventHandler<HTMLInputElement> = useDebounced(
+    (event) => {},
+    350
+  );
 
   const trimVideo = (): void => {
     if (!videoRef.current) return;
     const videoStart = (videoRef.current.duration * start) / 100;
     videoRef.current.currentTime = videoStart;
-    play();
   };
 
   const onTrim = (e: React.MouseEvent, isEnd: boolean): void => {
     if (!videoRef.current) return;
     e.preventDefault();
+    e.stopPropagation();
     const trimmer = videoRef.current;
     const startX = e.clientX;
     const initialLeft = isEnd ? end : start;
@@ -151,10 +162,8 @@ export const VideoPreview = ({ src }: { src: string }) => {
       const videoStart = (video.duration * start) / 100;
       if (seek.valueAsNumber >= end - 3) {
         video.currentTime = videoStart;
-        play();
       } else if (video.currentTime < videoStart) {
         video.currentTime = videoStart;
-        play();
       }
     },
     videoRef,
@@ -165,34 +174,45 @@ export const VideoPreview = ({ src }: { src: string }) => {
 
   return (
     <div className="video-preview flex flex-col gap-12 h-full items-center justify-center px-8 py-4 relative w-full">
-      <video
-        ref={videoRef}
-        onClick={togglePlay}
-        onTimeUpdate={syncSeekWithVideoValue}
-        className="peer relative w-full cursor-pointer rounded-[2cqw]"
-        playsInline
-        onError={(e) => {
-          // TODO:// HANDLE ERROR
-        }}
-        muted
-        loop
-      >
-        <source src={`http://localhost:${port}/${src}?access_token=${token}`} />
-        Your browser doesn't support <code>HTML5 video</code>
-      </video>
+      <div ref={wrapperRef} className="relative w-full justify-center">
+        <div className="wrapper flex relative justify-center" ref={wrapperRef}>
+          <video
+            ref={videoRef}
+            onClick={togglePlay}
+            className="peer relative cursor-pointer rounded-sm"
+            playsInline
+            preload="auto"
+            onError={(e) => {
+              // TODO:// HANDLE ERROR
+            }}
+            muted
+            loop
+          >
+            <source
+              src={`http://localhost:${port}/${src}?access_token=${token}`}
+            />
+            Your browser doesn't support <code>HTML5 video</code>
+          </video>
+        </div>
 
-      <button
-        tabIndex={-1}
-        onClick={togglePlay}
-        className={cn(
-          "invisible absolute m-auto grid aspect-square cursor-pointer place-items-center rounded-full bg-black/50 p-3 shadow-[0_0px_25px_3px_rgba(0,0,0,0.2)] outline-none hover:visible peer-hover:visible",
-          !isPlaying ? "visible" : "invisible"
-        )}
-      >
-        {isPlaying ? <PauseIcon /> : <PlayIcon />}
-      </button>
+        <button
+          tabIndex={-1}
+          onClick={togglePlay}
+          className={cn(
+            "invisible absolute cursor-pointer rounded-full bg-black/50 p-3 shadow-[0_0px_25px_3px_rgba(0,0,0,0.2)] outline-none hover:visible peer-hover:visible top-1/2 left-1/2 transition-all z-10 -ml-6 -mt-6 w-12 h-12 flex items-center justify-center",
+            !isPlaying ? "visible" : "invisible"
+          )}
+        >
+          {isPlaying ? <PauseIcon /> : <PlayIcon />}
+        </button>
+      </div>
 
       <div className="relative flex h-16 justify-between rounded-xl bg-card w-full">
+        <div
+          id="gap-start"
+          className="absolute h-full left-0 z-10 bg-noop select-none touch-none pointer-events-none	"
+          style={{ width: `${start}%` }}
+        ></div>
         <div
           ref={trimmerRef}
           id="trimmer"
@@ -207,7 +227,7 @@ export const VideoPreview = ({ src }: { src: string }) => {
             className="group absolute -bottom-1 -top-1 z-20 w-5 cursor-ew-resize rounded-[0.75rem_0_0_0.75rem] border-b-0 border-r-0 border-t-0 bg-yellow"
             style={{ left: "-16px" }}
           >
-            <div className="pointer-events-none absolute left-[8px] top-5 block h-6 w-1 rounded-[2px] bg-card/20 transition-all group-active:scale-y-[1.1] group-active:bg-card" />
+            <div className="pointer-events-none absolute left-[8px] top-5 block h-6 w-1 rounded-[2px] bg-inner transition-all group-active:scale-y-[1.1] group-active:bg-inner" />
           </div>
           <div
             onMouseDown={(e) => onTrim(e, true)}
@@ -217,9 +237,14 @@ export const VideoPreview = ({ src }: { src: string }) => {
             className="group absolute -bottom-1 -top-1 z-20 w-5 cursor-ew-resize rounded-[0_0.75rem_0.75rem_0] border-b-0 border-l-0 border-t-0 bg-yellow"
             style={{ right: "-16px" }}
           >
-            <div className="pointer-events-none absolute left-[8px] top-5 block h-6 w-1 rounded-[2px] bg-card/20 transition-all group-active:scale-y-[1.1] group-active:bg-card" />
+            <div className="pointer-events-none absolute left-[8px] top-5 block h-6 w-1 rounded-[2px] bg-inner transition-all group-active:scale-y-[1.1] group-active:bg-inner" />
           </div>
         </div>
+        <div
+          id="gap-end"
+          className="absolute h-full right-0 z-10 bg-noop select-none touch-none pointer-events-none	"
+          style={{ width: `${100 - end}%` }}
+        ></div>
         <input
           id="seek"
           min="0"
@@ -229,13 +254,11 @@ export const VideoPreview = ({ src }: { src: string }) => {
           type="range"
           ref={seekRef}
           onInput={syncVideoWithSeekValue}
-          onMouseDown={onMouseDown}
-          onMouseUp={onMouseUp}
           className="seek absolute z-10 w-full"
         />
         <div className="flex justify-between overflow-clip rounded-xl w-full">
           <div className="flex justify-between w-full">
-            <Frames video={videoRef} src={src} />
+            <Frames video={videoRef} wrapper={wrapperRef} src={src} />
           </div>
         </div>
       </div>

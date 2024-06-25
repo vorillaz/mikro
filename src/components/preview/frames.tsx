@@ -5,21 +5,14 @@ import { getActiveFileDuration, getActiveFile } from "src/ctx/selectors";
 import { FRAME_COUNT } from "@/utils/media";
 import pMap from "p-map";
 
-export const getFrame = (src?: string | null | undefined) => {
-  if (!src) {
-    // base64 empty image
-    return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
-  }
-
-  return convertFileSrc(src);
-};
-
 export const Frames = ({
   src,
   video,
+  wrapper,
 }: {
   src: string;
   video: React.MutableRefObject<HTMLVideoElement>;
+  wrapper: React.MutableRefObject<HTMLDivElement>;
 }) => {
   const [frames, setFrames] = useState<string[]>(
     // empty array of 20 frames
@@ -56,8 +49,8 @@ export const Frames = ({
           ]
         ) => {
           const s = frames.sort((a, b) => a.index - b.index).map((f) => f.path);
+          loadImgs([...s]);
           setFrames(() => [...s]);
-          handleInit();
         }
       )
       .catch((e) => {
@@ -66,50 +59,58 @@ export const Frames = ({
       });
   }, [src, duration, canvasRef?.current]);
 
-  const handleInit = () => {
+  const loadImgs = (frameUrls: string[]) => {
     canvasRef.current.width = wrapRef.current.offsetWidth;
     canvasRef.current.height = wrapRef.current.offsetHeight;
     const context = canvasRef.current.getContext("2d");
-    const thumbnailCount = getThumbnailCount();
+    // clear canvas
+    context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    const count = getThumbnailCount();
+    for (let i = 0; i < frameUrls.length; i++) {
+      const img = new Image();
 
-    const thumbnailWidth = canvasRef.current.width / thumbnailCount;
-    const thumbnailHeight = canvasRef.current.height;
-
-    const vid = video.current;
-    console.log(thumbnailCount);
-    let index = 0;
-
-    function captureThumbnail() {
-      if (index >= thumbnailCount) return captureEnd();
-
-      vid.currentTime = (index / thumbnailCount) * vid.duration;
-
-      vid.addEventListener(
-        "seeked",
-        function onSeeked() {
-          context?.drawImage(
-            vid,
-            thumbnailWidth * index,
-            0,
-            thumbnailWidth,
-            thumbnailHeight
-          );
-          vid.removeEventListener("seeked", onSeeked);
-          index++;
-          captureThumbnail();
-        },
-        { once: true }
-      );
+      img.src = convertFileSrc(frameUrls[i]);
+      img.onload = () => {
+        console.log("loaded");
+        context.drawImage(
+          img,
+          0,
+          0,
+          img.width,
+          img.height,
+          (i * canvasRef.current.width) / frames.length,
+          0,
+          canvasRef.current.width / frames.length,
+          canvasRef.current.height
+        );
+      };
     }
-
-    captureThumbnail();
   };
 
-  const captureEnd = () => {
-    if (!video?.current) {
-      return;
+  const handleInit = (frameUrls: string[]) => {
+    canvasRef.current.width = wrapRef.current.offsetWidth;
+    canvasRef.current.height = wrapRef.current.offsetHeight;
+    const context = canvasRef.current.getContext("2d");
+    const count = getThumbnailCount();
+    for (let i = 0; i < frameUrls.length; i++) {
+      const img = new Image();
+
+      img.src = convertFileSrc(frameUrls[i]);
+      img.onload = () => {
+        console.log("loaded");
+        context.drawImage(
+          img,
+          0,
+          0,
+          img.width,
+          img.height,
+          (i * canvasRef.current.width) / frames.length,
+          0,
+          canvasRef.current.width / frames.length,
+          canvasRef.current.height
+        );
+      };
     }
-    video.current.currentTime = 0;
   };
 
   const getThumbnailCount = (): number => {
@@ -117,11 +118,14 @@ export const Frames = ({
       return 0;
     }
 
-    const wrapWidth = wrapRef.current?.offsetWidth || 0;
-    const wrapHeight = wrapRef.current?.offsetHeight || 0;
+    const wrapWidth = wrapper.current?.offsetWidth || 0;
+    const wrapHeight = wrapper.current?.offsetHeight || 0;
 
     const ratio = video.current.videoWidth / video.current.videoHeight;
     const width = wrapHeight * ratio;
+
+    console.log(ratio);
+
     const availThumbs = wrapWidth / width;
 
     return availThumbs;
