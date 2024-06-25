@@ -67,7 +67,7 @@ pub async fn generate_timeline_thumbnail(
     let digest = md5::compute(video_path);
     let tmp = env::temp_dir();
     let next = index + 1;
-    let file_name = format!("{:x}-_{}.jpg", digest, next);
+    let file_name = format!("{:x}_{}_{}.jpg", digest, frames, next);
     let output_path: PathBuf = [tmp.clone(), PathBuf::from(&file_name)].iter().collect();
     let thumb = ThumbnailData {
         index: index,

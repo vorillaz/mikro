@@ -5,6 +5,8 @@ import { getActiveFileDuration, getActiveFile } from "src/ctx/selectors";
 import { FRAME_COUNT } from "@/utils/media";
 import pMap from "p-map";
 
+const SUB = 23;
+
 export const Frames = ({
   src,
   video,
@@ -27,7 +29,24 @@ export const Frames = ({
   useEffect(() => {
     if (!duration) return;
     // Loop and get frames with promise all
-    pMap(Array.from({ length: FRAME_COUNT }), async (_, i) => {
+    loadImgs();
+    return () => {
+      // cleanup
+      const context = canvasRef?.current?.getContext("2d");
+      if (context) {
+        context?.clearRect(
+          0,
+          0,
+          canvasRef.current.width,
+          canvasRef.current.height
+        );
+      }
+    };
+  }, [src, duration, canvasRef?.current]);
+
+  const loadImgs = async () => {
+    const count = getThumbnailCount();
+    const imgs = await pMap(Array.from({ length: count }), async (_, i) => {
       return await invoke<{
         path: string;
         index: number;
@@ -36,7 +55,7 @@ export const Frames = ({
         index: i,
         // @ts-expect-error
         duration: parseInt(duration),
-        frames: FRAME_COUNT,
+        frames: count,
       });
     })
       .then(
@@ -49,67 +68,42 @@ export const Frames = ({
           ]
         ) => {
           const s = frames.sort((a, b) => a.index - b.index).map((f) => f.path);
-          loadImgs([...s]);
-          setFrames(() => [...s]);
+          return s;
         }
       )
       .catch((e) => {
         console.log("Error getting frames");
         console.error(e);
+        return [];
       });
-  }, [src, duration, canvasRef?.current]);
-
-  const loadImgs = (frameUrls: string[]) => {
     canvasRef.current.width = wrapRef.current.offsetWidth;
     canvasRef.current.height = wrapRef.current.offsetHeight;
     const context = canvasRef.current.getContext("2d");
     // clear canvas
     context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-    const count = getThumbnailCount();
-    for (let i = 0; i < frameUrls.length; i++) {
+
+    for (let i = 0; i < count; i++) {
       const img = new Image();
 
-      img.src = convertFileSrc(frameUrls[i]);
+      img.src = convertFileSrc(imgs[i]);
+      img.onerror = (e) => {
+        console.error(e);
+      };
       img.onload = () => {
-        console.log("loaded");
         context.drawImage(
           img,
           0,
           0,
           img.width,
           img.height,
-          (i * canvasRef.current.width) / frames.length,
+          (i * canvasRef.current.width) / count,
           0,
-          canvasRef.current.width / frames.length,
+          canvasRef.current.width / count,
           canvasRef.current.height
         );
       };
-    }
-  };
-
-  const handleInit = (frameUrls: string[]) => {
-    canvasRef.current.width = wrapRef.current.offsetWidth;
-    canvasRef.current.height = wrapRef.current.offsetHeight;
-    const context = canvasRef.current.getContext("2d");
-    const count = getThumbnailCount();
-    for (let i = 0; i < frameUrls.length; i++) {
-      const img = new Image();
-
-      img.src = convertFileSrc(frameUrls[i]);
-      img.onload = () => {
-        console.log("loaded");
-        context.drawImage(
-          img,
-          0,
-          0,
-          img.width,
-          img.height,
-          (i * canvasRef.current.width) / frames.length,
-          0,
-          canvasRef.current.width / frames.length,
-          canvasRef.current.height
-        );
-      };
+      // release image
+      URL.revokeObjectURL(img.src);
     }
   };
 
@@ -118,17 +112,17 @@ export const Frames = ({
       return 0;
     }
 
-    const wrapWidth = wrapper.current?.offsetWidth || 0;
-    const wrapHeight = wrapper.current?.offsetHeight || 0;
+    const wrapWidth = wrapRef.current?.offsetWidth || 0;
+    const wrapHeight = wrapRef.current?.offsetHeight || 0;
 
     const ratio = video.current.videoWidth / video.current.videoHeight;
     const width = wrapHeight * ratio;
 
-    console.log(ratio);
-
     const availThumbs = wrapWidth / width;
 
-    return availThumbs;
+    const thumbs = Math.ceil(availThumbs);
+
+    return thumbs;
   };
 
   return (

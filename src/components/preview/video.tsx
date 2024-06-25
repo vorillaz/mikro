@@ -9,6 +9,8 @@ import { Frames } from "./frames";
 import { Play as PlayIcon, Pause as PauseIcon } from "../icons/media";
 import { invoke } from "@tauri-apps/api";
 
+import { FFmpeg } from "@ffmpeg/ffmpeg";
+
 import { getAccessToken, getPort, getActiveFile } from "src/ctx/selectors";
 import { useToggle } from "@/hooks/use-toggle";
 import { useDebounced } from "@/hooks/use-debounced";
@@ -43,6 +45,7 @@ export const VideoPreview = ({ src }: { src: string }) => {
         dispatch(addDuration(duration, file?.id));
       })
       .catch((e) => {});
+    return () => {};
   }, [src, file?.id]);
 
   const togglePlay = (): void => {
@@ -127,11 +130,11 @@ export const VideoPreview = ({ src }: { src: string }) => {
       const newPos = initialLeft + (delta / trimmer.clientWidth) * 100;
 
       if (isEnd) {
-        if (newPos <= 100 && newPos >= start + 5) {
+        if (newPos <= 100 && newPos >= start) {
           setEnd(newPos);
         }
       } else {
-        if (newPos >= 0 && newPos <= end - 5) {
+        if (newPos >= 0 && newPos <= end) {
           setStart(newPos);
         }
       }
@@ -160,7 +163,7 @@ export const VideoPreview = ({ src }: { src: string }) => {
       const video = videoRef.current;
       const seek = seekRef.current;
       const videoStart = (video.duration * start) / 100;
-      if (seek.valueAsNumber >= end - 3) {
+      if (seek.valueAsNumber >= end) {
         video.currentTime = videoStart;
       } else if (video.currentTime < videoStart) {
         video.currentTime = videoStart;
@@ -173,24 +176,26 @@ export const VideoPreview = ({ src }: { src: string }) => {
   );
 
   return (
-    <div className="video-preview flex flex-col gap-12 h-full items-center justify-center px-8 py-4 relative w-full">
-      <div ref={wrapperRef} className="relative w-full justify-center">
-        <div className="wrapper flex relative justify-center" ref={wrapperRef}>
+    <div
+      ref={wrapperRef}
+      className="video-preview flex flex-col gap-12 h-full px-8 py-4 relative w-full"
+    >
+      <div
+        id="video-preview-wrapper"
+        className="relative w-full justify-center flex-1"
+      >
+        <div className="wrapper flex relative justify-center w-full h-full">
           <video
             ref={videoRef}
             onClick={togglePlay}
             className="peer relative cursor-pointer rounded-sm"
-            playsInline
-            preload="auto"
             onError={(e) => {
-              // TODO:// HANDLE ERROR
+              console.log("cannot play");
             }}
+            src={`http://localhost:${port}/${src}?access_token=${token}`}
             muted
             loop
           >
-            <source
-              src={`http://localhost:${port}/${src}?access_token=${token}`}
-            />
             Your browser doesn't support <code>HTML5 video</code>
           </video>
         </div>
@@ -207,7 +212,7 @@ export const VideoPreview = ({ src }: { src: string }) => {
         </button>
       </div>
 
-      <div className="relative flex h-16 justify-between rounded-xl bg-card w-full">
+      <div className="relative flex h-16 justify-between rounded-xl bg-card w-full ">
         <div
           id="gap-start"
           className="absolute h-full left-0 z-10 bg-noop select-none touch-none pointer-events-none	"

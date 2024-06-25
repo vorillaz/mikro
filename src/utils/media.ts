@@ -1,6 +1,6 @@
 import { OpenDialogOptions } from "@tauri-apps/api/dialog";
 import { basename, resolveResource } from "@tauri-apps/api/path";
-export const FRAME_COUNT = 14;
+export const FRAME_COUNT = 40;
 export const imgExtensions = [
   "png",
   "jpg",

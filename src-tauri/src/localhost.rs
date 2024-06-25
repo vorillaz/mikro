@@ -99,6 +99,8 @@ pub fn spawn_localhost_server(localhost_port: u16, random_access_token: String) 
                     Ok(file) => file,
                 };
 
+                // Transcode video to mp4 if it's not already
+
                 let mut buf = Vec::new();
 
                 // Get the file size
