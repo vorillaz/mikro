@@ -17,6 +17,8 @@ import { cn, formatTime } from "@/utils/helpers";
 import { addDuration } from "../../ctx/actions";
 import { useDispatcher } from "../../ctx/store";
 
+const step = 0.01;
+
 export const VideoPreview = ({ src }: { src: string }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -27,6 +29,8 @@ export const VideoPreview = ({ src }: { src: string }) => {
 
   const [start, setStart] = useState(0);
   const [end, setEnd] = useState(100);
+  const [error, setError] = useState<boolean>(false);
+  const [isTrimming, setIsTrimming, toggleIsTrimming] = useToggle(false);
 
   const [isPlaying, setIsPlaying, toggleIsPlaying] = useToggle(false);
 
@@ -47,6 +51,10 @@ export const VideoPreview = ({ src }: { src: string }) => {
   }, [src, file?.id]);
 
   const togglePlay = (): void => {
+    if (!videoRef.current) return;
+    if (error) {
+      return;
+    }
     isPlaying ? videoRef.current?.pause() : videoRef.current?.play();
     toggleIsPlaying();
   };
@@ -56,13 +64,17 @@ export const VideoPreview = ({ src }: { src: string }) => {
     setIsPlaying(true);
   };
 
+  const onError = (): void => {
+    setError(true);
+  };
   useEffect(() => {
     if (!videoRef.current) return;
+    if (!seekRef.current) return;
 
     const updateSeek = () => {
-      if (!seekRef.current || !videoRef.current) return;
       const seek = seekRef.current;
       const video = videoRef.current;
+      const wrapper = wrapperRef.current;
       const value = (100 / video.duration) * video.currentTime;
       seek.value = value.toFixed(2);
       seek.setAttribute("current-time", formatTime(video.currentTime));
@@ -70,20 +82,34 @@ export const VideoPreview = ({ src }: { src: string }) => {
       seek.style.setProperty("--label-position", `${thumbPosition}px`);
     };
 
-    const onTimeUpdate = () => {
+    const onMove = () => {
       requestAnimationFrame(updateSeek);
     };
 
-    videoRef?.current?.addEventListener("timeupdate", onTimeUpdate);
-    videoRef?.current?.addEventListener("seeked", onTimeUpdate);
+    const onEnd = (e) => {
+      const duration = e?.target?.duration || 0;
+      const currentTime = e?.target?.currentTime || 0;
+      const videoStart = (duration * start) / 100;
+
+      const seek = seekRef.current;
+
+      console.log(seek.valueAsNumber);
+
+      console.log(end);
+    };
+
+    videoRef?.current?.addEventListener("timeupdate", onMove);
+    videoRef?.current?.addEventListener("timeupdate", onEnd);
+    videoRef?.current?.addEventListener("seeked", onMove);
 
     return () => {
       videoRef.current?.pause();
-      videoRef.current?.removeEventListener("timeupdate", onTimeUpdate);
-      videoRef.current?.removeEventListener("seeked", onTimeUpdate);
+      videoRef.current?.removeEventListener("timeupdate", onMove);
+      videoRef.current?.removeEventListener("timeupdate", onEnd);
+      videoRef.current?.removeEventListener("seeked", onMove);
       setIsPlaying(false);
     };
-  }, [videoRef]);
+  }, [videoRef, seekRef]);
 
   const syncVideoWithSeekValue: FormEventHandler<HTMLInputElement> = () => {
     if (!seekRef.current || !videoRef.current) return;
@@ -91,6 +117,7 @@ export const VideoPreview = ({ src }: { src: string }) => {
     const video = videoRef.current;
     const time = video.duration * (Number(seek.value) / 100);
     const videoStart = (video.duration * start) / 100;
+
     if (seek.valueAsNumber >= end) {
       video.currentTime = videoStart;
     } else if (video.currentTime < videoStart) {
@@ -119,7 +146,6 @@ export const VideoPreview = ({ src }: { src: string }) => {
   const onTrim = (e: React.MouseEvent, isEnd: boolean): void => {
     if (!videoRef.current) return;
     e.preventDefault();
-    e.stopPropagation();
     const trimmer = videoRef.current;
     const startX = e.clientX;
     const initialLeft = isEnd ? end : start;
@@ -143,6 +169,9 @@ export const VideoPreview = ({ src }: { src: string }) => {
     const onDragEnd = () => {
       document.removeEventListener("mousemove", onDrag);
       document.removeEventListener("mouseup", onDragEnd);
+
+      console.log("end", end);
+      console.log("start", start);
     };
 
     document.addEventListener("mousemove", onDrag);
@@ -155,25 +184,6 @@ export const VideoPreview = ({ src }: { src: string }) => {
       togglePlay();
     }
   });
-
-  // useEventListener(
-  //   "timeupdate",
-  //   () => {
-  //     if (!videoRef.current || !seekRef.current) return;
-  //     const video = videoRef.current;
-  //     const seek = seekRef.current;
-  //     const videoStart = (video.duration * start) / 100;
-  //     if (seek.valueAsNumber >= end) {
-  //       video.currentTime = videoStart;
-  //     } else if (video.currentTime < videoStart) {
-  //       video.currentTime = videoStart;
-  //     }
-  //   },
-  //   videoRef,
-  //   {
-  //     passive: true,
-  //   }
-  // );
 
   return (
     <div
@@ -189,9 +199,7 @@ export const VideoPreview = ({ src }: { src: string }) => {
             ref={videoRef}
             onClick={togglePlay}
             className="peer relative cursor-pointer rounded-sm"
-            onError={(e) => {
-              console.log("cannot play");
-            }}
+            onError={onError}
             src={`http://localhost:${port}/${src}?access_token=${token}`}
             muted
             loop
@@ -199,6 +207,13 @@ export const VideoPreview = ({ src }: { src: string }) => {
             Your browser doesn't support <code>HTML5 video</code>
           </video>
         </div>
+
+        <button
+          onClick={toggleIsTrimming}
+          className="absolute cursor-pointer top-4 left-4 z-20"
+        >
+          Trim
+        </button>
 
         <button
           tabIndex={-1}
@@ -212,10 +227,13 @@ export const VideoPreview = ({ src }: { src: string }) => {
         </button>
       </div>
 
-      <div className="relative flex h-16 justify-between rounded-xl bg-card w-full ">
+      <div
+        data-id="trim-holder"
+        className="relative flex h-16 justify-between rounded-xl bg-card w-full"
+      >
         <div
           id="gap-start"
-          className="absolute h-full left-0 z-10 bg-noop select-none touch-none pointer-events-none	"
+          className="absolute h-full left-0 z-10 bg-noop select-none touch-none pointer-events-none	overflow-hidden rounded-l-xl"
           style={{ width: `${start}%` }}
         ></div>
         <div
@@ -247,14 +265,14 @@ export const VideoPreview = ({ src }: { src: string }) => {
         </div>
         <div
           id="gap-end"
-          className="absolute h-full right-0 z-10 bg-noop select-none touch-none pointer-events-none	"
+          className="absolute h-full right-0 z-10 bg-noop select-none touch-none pointer-events-none overflow-hidden rounded-r-xl"
           style={{ width: `${100 - end}%` }}
         ></div>
         <input
           id="seek"
           min="0"
           max="100"
-          step="0.01"
+          step={step}
           defaultValue="0"
           type="range"
           ref={seekRef}
