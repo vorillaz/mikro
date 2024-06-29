@@ -141,25 +141,23 @@ pub async fn generate_video_thumbnail(
     video_path: &str,
 ) -> Result<String, String> {
     if !Path::exists(Path::new(video_path)) {
-        return Err("Path not found".into());
+        return Err("Path not found".to_owned().to_string());
     }
 
     let digest = md5::compute(video_path);
-    let file_name = format!("{:x}.jpg", digest);
+    let file_name = format!("{:x}-thumb.jpg", digest);
 
     let tmp = env::temp_dir();
     let output_path: PathBuf = [tmp.clone(), PathBuf::from(&file_name)].iter().collect();
 
     let errors = FfmpegCommand::new()
         .args([
-            "-ss",
-            "00:00:01.00",
             "-i",
             video_path,
             "-threads",
             "2",
             "-vf",
-            "scale=1080:720:force_original_aspect_ratio=decrease",
+            "thumbnail=300",
             "-vframes",
             "1",
             &output_path.display().to_string(),

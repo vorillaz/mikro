@@ -77,8 +77,8 @@ export const Timeline = ({
         let stopped =
           (end * insideTrackRef.current.offsetWidth - 2 * BORDER_WIDTH) /
           duration;
-        seekX.set(stopped);
         video.pause();
+        seekX.set(stopped);
         return;
       }
 

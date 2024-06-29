@@ -4,6 +4,7 @@ import { addDuration } from "src/ctx/actions";
 import { useDispatcher } from "src/ctx/store";
 import { cn } from "@/utils/helpers";
 import { useToggle } from "@/hooks/use-toggle";
+import { convertFileSrc } from "@tauri-apps/api/tauri";
 
 import {
   Play as PlayIcon,
@@ -60,6 +61,7 @@ export const Video = ({ src, duration, file }: Props) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying, toggleIsPlaying] = useToggle(false);
   const [trimming, setTrimming] = useState<boolean>(false);
+  const [thumb, setThumb] = useState<string>(null);
   const [error, setError] = useState<boolean>(false);
 
   const togglePlay = () => {
@@ -73,6 +75,15 @@ export const Video = ({ src, duration, file }: Props) => {
   const toggleTrimming = () => {
     setTrimming((prev) => !prev);
   };
+
+  useEffect(() => {
+    if (!file) return;
+    invoke<string>("generate_video_thumbnail", { videoPath: file }).then(
+      (thumb) => {
+        setThumb(convertFileSrc(thumb));
+      }
+    );
+  }, [file]);
 
   useEffect(() => {
     if (!videoRef.current) return;
@@ -113,13 +124,12 @@ export const Video = ({ src, duration, file }: Props) => {
         {/*  */}
         <div className="video-holder relative aspect-video flex items-center justify-center">
           <video
+            poster={thumb}
             onError={onError}
             ref={videoRef}
             src={src}
             preload="metadata"
-            playsInline
             muted
-            controls
           ></video>
           <button
             tabIndex={-1}
@@ -139,6 +149,7 @@ export const Video = ({ src, duration, file }: Props) => {
             <span>Trim</span>
           </button>
         </div>
+
         <div
           className={cn(
             "invisible  bottom-0 w-full left-0",
