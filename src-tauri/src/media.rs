@@ -48,8 +48,9 @@ pub async fn get_duration(app: tauri::AppHandle, video_path: &str) -> Result<f32
     let info = String::from_utf8_lossy(&output.stdout);
     let d = info.trim().parse::<f32>().unwrap();
 
-    // ceil to one decimal place
-    let duration = (d * 10.0).ceil() / 10.0;
+    // ceil to two decimal places
+    let duration = (d * 100.0).ceil() / 100.0;
+
     Ok(duration)
 }
 
@@ -67,7 +68,7 @@ pub async fn generate_timeline_thumbnail(
     let digest = md5::compute(video_path);
     let tmp = env::temp_dir();
     let next = index + 1;
-    let file_name = format!("{:x}_{}_{}.jpg", digest, frames, next);
+    let file_name = format!("{:x}_{}___{}.jpg", digest, frames, next);
     let output_path: PathBuf = [tmp.clone(), PathBuf::from(&file_name)].iter().collect();
     let thumb = ThumbnailData {
         index: index,
@@ -111,8 +112,9 @@ pub async fn generate_timeline_thumbnail(
             &time.to_string(),
             "-i",
             video_path,
-            "-vf",
-            "select=eq(pict_type\\,I)",
+            // Remove the filter to get all frames since it is not working as expected
+            // "-vf",
+            // "select=eq(pict_type\\,I)",
             "-vframes",
             "1",
             &output_path.display().to_string(),

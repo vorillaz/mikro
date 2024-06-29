@@ -13,6 +13,7 @@ pub fn spawn_localhost_server(localhost_port: u16, random_access_token: String) 
         io::{Read, Seek, SeekFrom},
         path::Path,
         thread,
+        time::UNIX_EPOCH,
     };
     use tauri::http::HttpRange;
 
@@ -103,6 +104,18 @@ pub fn spawn_localhost_server(localhost_port: u16, random_access_token: String) 
 
                 let mut buf = Vec::new();
 
+                let mut etag_header = format!("");
+
+                if let Ok(time) = content.metadata().unwrap().modified() {
+                    etag_header = format!(r#""{}""#,
+                        // The ETag's can be any value so we just use the modified time to make it easy.
+                        time.duration_since(UNIX_EPOCH)
+                            .expect("are you a time traveler? cause that's the only explanation for this error")
+                            .as_millis()
+                    );
+                }
+                
+
                 // Get the file size
                 let file_size = content.metadata().unwrap().len();
 
@@ -132,8 +145,6 @@ pub fn spawn_localhost_server(localhost_port: u16, random_access_token: String) 
                 // who should be skipped on the header
                 let last_byte = range.start + real_length - 1;
 
-                // FIXME: Add ETag support (caching on the webview)
-
                 // seek our file bytes
                 content.seek(SeekFrom::Start(range.start)).expect("seek");
                 content
@@ -144,6 +155,9 @@ pub fn spawn_localhost_server(localhost_port: u16, random_access_token: String) 
                 // println!("[localhost] requested {}MB", (range.length) / (1024 * 1024));
                 // println!("[localhost] sending {}MB", (real_length) / (1024 * 1024));
 
+                // FIXME: Add ETag support (caching on the webview)
+                // etag from metadata modified
+
                 Response::from_data(mime, buf)
                     .with_status_code(206)
                     .with_additional_header("Connection", "Keep-Alive")
@@ -153,6 +167,8 @@ pub fn spawn_localhost_server(localhost_port: u16, random_access_token: String) 
                         "Content-Range",
                         format!("bytes {}-{}/{}", range.start, last_byte, file_size),
                     )
+                    .with_additional_header("Content-Length", file_size.to_string())
+                    .with_additional_header("ETag", etag_header)
             });
         })
         .expect("localhost thread")

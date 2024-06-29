@@ -14,18 +14,18 @@ export const debounce = (func: Function, wait: number) => {
 
 export { twMerge as cn } from "tailwind-merge";
 
-export const lerp = (start: number, end: number, amt: number) =>
-  (1 - amt) * start + amt * end;
+const HOUR_IN_SECS = 3600;
 
-export const clamp = (value: number, min: number, max: number): number =>
-  Math.min(Math.max(value, min), max);
+export const formatTime = (seconds) => {
+  const date = new Date(null);
+  date.setSeconds(seconds);
 
-export const formatTime = (seconds: number) => {
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainingSeconds = Math.floor(seconds % 60);
-  const milliseconds = Math.floor((seconds - Math.floor(seconds)) * 100);
+  if (seconds <= HOUR_IN_SECS) {
+    return date.toISOString().substr(14, 5);
+  }
 
-  return `${String(minutes).padStart(2, "0")}:${String(
-    remainingSeconds
-  ).padStart(2, "0")}:${String(milliseconds).padStart(2, "0")}`;
+  return date.toISOString().substr(11, 8);
 };
+
+export const pxToPc = (px, max) => (px * 100) / max;
+export const pcToPx = (pc, max) => (pc * max) / 100;

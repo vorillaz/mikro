@@ -1,7 +1,7 @@
 import { FC } from "react";
 export const DEFAULT_SIZE = "50px";
 export interface IconProps {
-  size?: string;
+  size?: string | number;
 }
 
 export const Pause: FC<IconProps> = ({ size = DEFAULT_SIZE }) => (
@@ -10,7 +10,7 @@ export const Pause: FC<IconProps> = ({ size = DEFAULT_SIZE }) => (
     stroke="currentColor"
     width={size}
     height={size}
-    stroke-width="2"
+    strokeWidth="2"
     fill="none"
     strokeLinecap="round"
     strokeLinejoin="round"
@@ -26,7 +26,7 @@ export const Scissors: FC<IconProps> = ({ size = DEFAULT_SIZE }) => (
     stroke="currentColor"
     width={size}
     height={size}
-    stroke-width="2"
+    strokeWidth="2"
     fill="none"
     strokeLinecap="round"
     strokeLinejoin="round"
@@ -45,7 +45,7 @@ export const Play: FC<IconProps> = ({ size = DEFAULT_SIZE }) => (
     stroke="currentColor"
     width={size}
     height={size}
-    stroke-width="2"
+    strokeWidth="2"
     fill="none"
     strokeLinecap="round"
     strokeLinejoin="round"
@@ -60,7 +60,7 @@ export const Loading: FC<IconProps> = ({ size = DEFAULT_SIZE }) => (
     width={size}
     height={size}
     stroke="currentColor"
-    stroke-width="2"
+    strokeWidth="2"
     fill="none"
     strokeLinecap="round"
     strokeLinejoin="round"

@@ -1,21 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { convertFileSrc } from "@tauri-apps/api/tauri";
-import { getActiveFileDuration, getActiveFile } from "src/ctx/selectors";
+import { getActiveFileDuration } from "src/ctx/selectors";
 import { FRAME_COUNT } from "@/utils/media";
 import { debounce } from "@/utils/helpers";
 import pMap from "p-map";
 
-const SUB = 23;
-
 export const Frames = ({
   src,
-  video,
-  wrapper,
+  videoRef,
 }: {
   src: string;
-  video: React.MutableRefObject<HTMLVideoElement>;
-  wrapper: React.MutableRefObject<HTMLDivElement>;
+  videoRef: React.MutableRefObject<HTMLVideoElement>;
 }) => {
   const [frames, setFrames] = useState<string[]>(
     // empty array of 20 frames
@@ -117,14 +113,14 @@ export const Frames = ({
   };
 
   const getThumbnailCount = (): number => {
-    if (!video?.current) {
+    if (!videoRef?.current) {
       return 0;
     }
 
     const wrapWidth = wrapRef.current?.offsetWidth || 0;
     const wrapHeight = wrapRef.current?.offsetHeight || 0;
 
-    const ratio = video.current.videoWidth / video.current.videoHeight;
+    const ratio = videoRef.current.videoWidth / videoRef.current.videoHeight;
     const width = wrapHeight * ratio;
 
     const availThumbs = wrapWidth / width;
@@ -135,8 +131,8 @@ export const Frames = ({
   };
 
   return (
-    <div ref={wrapRef} className="flex w-full">
-      <canvas className="flex w-full" ref={canvasRef}></canvas>
+    <div ref={wrapRef} className="flex w-full h-full relative">
+      <canvas className="flex w-full h-full" ref={canvasRef}></canvas>
     </div>
   );
 };

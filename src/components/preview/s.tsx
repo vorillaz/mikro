@@ -5,7 +5,7 @@ import {
   type FormEventHandler,
   type MouseEventHandler,
 } from "react";
-import { Frames } from "./frames";
+import { Frames } from "./video/frames";
 import { Play as PlayIcon, Pause as PauseIcon } from "../icons/media";
 import { invoke } from "@tauri-apps/api";
 
@@ -67,6 +67,7 @@ export const VideoPreview = ({ src }: { src: string }) => {
   const onError = (): void => {
     setError(true);
   };
+
   useEffect(() => {
     if (!videoRef.current) return;
     if (!seekRef.current) return;
