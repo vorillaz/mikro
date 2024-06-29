@@ -58,22 +58,30 @@ export const Timeline = ({
     videoRef.current.currentTime = time;
   };
 
-  const ending = (e) => {
+  const onEnd = (e) => {
     let time = videoRef.current.currentTime;
     const end = endTime.get();
 
-    if (end < duration) {
-      if (time >= end) {
-        videoRef.current.pause();
-      }
-      return;
+    if (time >= end) {
+      console.log("end");
+      videoRef.current.pause();
     }
   };
 
   const moving = () => {
     const video = videoRef.current;
     let time = video?.currentTime;
+    const end = endTime.get();
     if (isOn.current === true) {
+      if (time >= end) {
+        let stopped =
+          (end * insideTrackRef.current.offsetWidth - 2 * BORDER_WIDTH) /
+          duration;
+        seekX.set(stopped);
+        video.pause();
+        return;
+      }
+
       let curr =
         (time * insideTrackRef.current.offsetWidth - 2 * BORDER_WIDTH) /
         duration;
@@ -84,8 +92,6 @@ export const Timeline = ({
       }
     }
   };
-
-  const onEnd = throttle(ending, 250);
 
   const canPlay = () => {
     const loop = () => {
@@ -108,17 +114,15 @@ export const Timeline = ({
       isOn.current = false;
     };
 
-    videoRef.current.addEventListener("timeupdate", onEnd);
-    // videoRef.current.addEventListener("timeupdate", onMove);
+    // videoRef.current.addEventListener("timeupdate", onEnd);
     videoRef.current.addEventListener("canplay", canPlay);
     videoRef.current.addEventListener("play", onPlay);
     videoRef.current.addEventListener("pause", onPause);
 
     return () => {
       videoRef?.current?.pause();
-      // videoRef?.current?.removeEventListener("timeupdate", onMove);
       videoRef?.current?.removeEventListener("canplay", canPlay);
-      videoRef?.current?.removeEventListener("timeupdate", onEnd);
+      // videoRef?.current?.removeEventListener("timeupdate", onEnd);
       videoRef?.current?.removeEventListener("play", onPlay);
       videoRef?.current?.removeEventListener("pause", onPause);
     };
@@ -200,17 +204,11 @@ export const Timeline = ({
         memo.width.slice(0, -1) - pxToPcOuter(nextX - memo.x) + "%";
       const startTime = getStartTime(nextX);
 
-      // if nextX > seekX, then seekX should be updated
-      if (nextX > seekX.get()) {
-        seekToTime(nextX);
-        set.start({
-          seekX: nextX,
-          immediate: true,
-        });
-      }
+      seekToTime(nextX);
 
       set.start({
         startTime,
+        seekX: nextX,
         x: nextX,
         dragging: down,
         width: nextWidth,
@@ -237,16 +235,11 @@ export const Timeline = ({
 
       const endTime = getEndTime(xx, w);
 
-      const seeks = seekX.get();
-      const seek = clamp(
-        seeks,
-        xx,
-        pcToPxInner(w) - HANDLE_WIDTH - BORDER_WIDTH * 2
-      );
+      seekToTime(xx);
 
       set.start({
         endTime,
-        seekX: seek,
+        seekX: xx,
         dragging: down,
         width: nextWidth,
         active: x.get() !== 0 || nextWidth !== "100%",
@@ -275,15 +268,10 @@ export const Timeline = ({
         videoRef?.current?.pause();
       }
 
-      const seeks = seekX.get();
-      const seek = clamp(
-        seeks,
-        nextX,
-        pcToPxInner(w) - HANDLE_WIDTH - BORDER_WIDTH * 2
-      );
+      seekToTime(nextX);
 
       set.start({
-        seekX: seek,
+        seekX: nextX,
         x: nextX,
         startTime,
         endTime,

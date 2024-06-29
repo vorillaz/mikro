@@ -4,7 +4,6 @@ import { addDuration } from "src/ctx/actions";
 import { useDispatcher } from "src/ctx/store";
 import { cn } from "@/utils/helpers";
 import { useToggle } from "@/hooks/use-toggle";
-import { convertFileSrc } from "@tauri-apps/api/tauri";
 
 import {
   Play as PlayIcon,
@@ -53,10 +52,7 @@ export const VideoPreview = ({ src }: { src: string }) => {
     return null;
   }
 
-  bump = `stream://${src}`;
-  const path = convertFileSrc(src, "stream");
-
-  return <Video src={path} duration={duration} file={src} />;
+  return <Video src={bump} duration={duration} file={src} />;
 };
 
 export const Video = ({ src, duration, file }: Props) => {
@@ -120,7 +116,7 @@ export const Video = ({ src, duration, file }: Props) => {
             onError={onError}
             ref={videoRef}
             src={src}
-            preload="auto"
+            preload="metadata"
             playsInline
             muted
             controls
