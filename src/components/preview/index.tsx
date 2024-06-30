@@ -1,6 +1,7 @@
 import { getActiveFile } from "../../ctx/selectors";
 import { ImgPreview } from "./img";
 import { VideoPreview } from "./video";
+// import { VideoPreview } from "./s";
 
 export const Preview = () => {
   const activeFile = getActiveFile();

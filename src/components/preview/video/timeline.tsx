@@ -5,7 +5,11 @@ import clamp from "lodash.clamp";
 import { pxToPc, pcToPx } from "src/utils/helpers";
 import { Handle, AnimatedTime } from "./handle";
 import { Frames } from "./frames";
-import throttle from "lodash.throttle";
+
+// Bug in fucking safari:
+
+//https://stackoverflow.com/a/50951559
+//https://stackoverflow.com/a/18283198
 
 export const Timeline = ({
   src,
@@ -54,7 +58,6 @@ export const Timeline = ({
 
   const seekToTime = (seekValue) => {
     const time = getSeekToTime(seekValue);
-
     videoRef.current.currentTime = time;
   };
 
@@ -63,7 +66,6 @@ export const Timeline = ({
     const end = endTime.get();
 
     if (time >= end) {
-      console.log("end");
       videoRef.current.pause();
     }
   };
@@ -116,6 +118,9 @@ export const Timeline = ({
 
     // videoRef.current.addEventListener("timeupdate", onEnd);
     videoRef.current.addEventListener("canplay", canPlay);
+    videoRef.current.addEventListener("loadmetadata", () => {
+      console.log("metadata loaded");
+    });
     videoRef.current.addEventListener("play", onPlay);
     videoRef.current.addEventListener("pause", onPause);
 
