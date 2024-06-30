@@ -74,10 +74,11 @@ export const Timeline = ({
     const video = videoRef.current;
     let time = video?.currentTime;
     const end = endTime.get();
+    const start = startTime.get();
     if (isOn.current === true) {
       if (time >= end) {
         let stopped =
-          (end * insideTrackRef.current.offsetWidth - 2 * BORDER_WIDTH) /
+          (start * insideTrackRef.current.offsetWidth - 2 * BORDER_WIDTH) /
           duration;
         video.pause();
         seekX.set(stopped);
@@ -91,6 +92,7 @@ export const Timeline = ({
       if (now.current < curr) {
         seekX.set(curr);
         now.current = curr;
+      } else {
       }
     }
   };
@@ -118,9 +120,6 @@ export const Timeline = ({
 
     // videoRef.current.addEventListener("timeupdate", onEnd);
     videoRef.current.addEventListener("canplay", canPlay);
-    videoRef.current.addEventListener("loadmetadata", () => {
-      console.log("metadata loaded");
-    });
     videoRef.current.addEventListener("play", onPlay);
     videoRef.current.addEventListener("pause", onPause);
 
