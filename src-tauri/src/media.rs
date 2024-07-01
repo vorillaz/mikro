@@ -13,7 +13,7 @@ use std::{
 use tauri::{AppHandle, Manager};
 
 use crate::domain::{
-    CancelInProgressCompressionPayload, CompressionResult, CustomEvents, TauriEvents,
+    CancelInProgressCompressionPayload, CompressionResult, CustomEvents, EventPayload, TauriEvents,
     ThumbnailData, VideoCompressionProgress,
 };
 
@@ -39,12 +39,26 @@ const IMAGE_EXTENSIONS: [&str; 7] = ["png", "jpg", "jpeg", "gif", "webp", "avif"
 
 pub async fn compress_all_videos(app: tauri::AppHandle, video_paths: Vec<String>) {}
 
-pub async fn compress_all_images(app: tauri::AppHandle, video_paths: Vec<String>) {}
+pub async fn compress_all_images(app: tauri::AppHandle, image_paths: Vec<String>) {}
 
 //
-pub async fn compress_all(app: tauri::AppHandle, file_paths: Vec<String>) {
+pub async fn compress_all(app: tauri::AppHandle, file_paths: Vec<String>) -> Result<(), String> {
     let mut videofiles = vec![];
     let mut imagefiles = vec![];
+
+    // if one of the files does not exist, return an error
+    for file in file_paths.iter() {
+        if !Path::exists(Path::new(file)) {
+            let _s = app.emit_all(
+                CustomEvents::CancelInProgressCompression.as_ref(),
+                EventPayload {
+                    message: "One of the files does not exist".to_owned(),
+                },
+            );
+
+            return Err("One of the files does not exist".to_owned());
+        }
+    }
 
     for file in file_paths {
         let ext = file.split('.').last().unwrap();
@@ -56,12 +70,13 @@ pub async fn compress_all(app: tauri::AppHandle, file_paths: Vec<String>) {
     }
 
     if videofiles.len() > 0 {
-        compress_all_videos(app.clone(), videofiles).await;
+        let imgs = compress_all_videos(app.clone(), videofiles).await;
     }
 
     if (imagefiles.len() > 0) {
-        compress_all_images(app.clone(), imagefiles).await;
+        let videos = compress_all_images(app.clone(), imagefiles).await;
     }
+    return Ok(());
 }
 
 #[tauri::command(async)]

@@ -30,6 +30,8 @@ pub struct VideoCompressionProgress {
 pub enum CustomEvents {
     VideoCompressionProgress,
     CancelInProgressCompression,
+    StartCompression,
+    CompressionComplete,
 }
 
 #[derive(EnumProperty)]
@@ -51,8 +53,8 @@ pub struct ThumbnailData {
     pub path: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct EventPayload {
-    message: String,
+    pub message: String,
 }
