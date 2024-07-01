@@ -20,6 +20,7 @@ ffmpeg-sidecar = "1.0.1"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "1.6", features = [
+    "system-tray",
     "protocol-asset",
     "path-all",
     "notification-all",
@@ -43,14 +44,18 @@ tauri = { version = "1.6", features = [
 ffmpeg-sidecar = "1.0.1"
 window-vibrancy = "0.5.0"
 anyhow = "1.0.44"
+strum = { version = "0.26.2", features = ["derive"] }
 tokio = { version = "1.35.1", features = ["full"] }
 tokio-util = { version = "0.7.10", features = ["io"] }
 imagequant = "4.3.1"
 gifski = "1.32.0"
 mac_address = "1.1.7"
 machine-uid = "0.5.1"
+shared_child = "1.0.0"
 hostname = "0.4.0"
 rouille = "3.6.2"
+fast_image_resize = "3.0.3"
+image = "0.24.8"
 portpicker = "0.1.1"
 uuid = "1.8.0"
 md5 = "0.7.0"

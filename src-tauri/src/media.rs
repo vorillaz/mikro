@@ -3,25 +3,69 @@ use ffmpeg_sidecar::{
     command::FfmpegCommand,
     event::{FfmpegEvent, LogLevel},
 };
-use serde::Serialize;
+use shared_child::SharedChild;
 use std::{
     env,
     path::{Path, PathBuf},
     process::Command,
+    sync::{Arc, Mutex},
+};
+use tauri::{AppHandle, Manager};
+
+use crate::domain::{
+    CancelInProgressCompressionPayload, CompressionResult, CustomEvents, TauriEvents,
+    ThumbnailData, VideoCompressionProgress,
 };
 
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct ThumbnailData {
-    index: i16,
-    path: String,
+const VIDEO_EXTENSIONS: [&str; 12] = [
+    "flv", "mp4", "m3u8", "webm", "ogg", "mov", "avi", "mkv", "wmv", "m4v", "3gp", "3g2",
+];
+const IMAGE_EXTENSIONS: [&str; 7] = ["png", "jpg", "jpeg", "gif", "webp", "avif", "svg"];
+
+// pub async fn compress_video(
+//     video_path: &str,
+//     convert_to_extension: &str,
+//     preset_name: Option<&str>,
+//     video_id: Option<&str>,
+//     should_mute_video: bool,
+//     quality: u16,
+// ) -> Result<CompressionResult, String> {
+// 1. try to convert the video to the desired extension and setup in tmp file
+// 2. send events for progress
+// 3. copy the file to the destination
+// 4. cleanup the tmp file
+// 5. return the result
+// }
+
+pub async fn compress_all_videos(app: tauri::AppHandle, video_paths: Vec<String>) {}
+
+pub async fn compress_all_images(app: tauri::AppHandle, video_paths: Vec<String>) {}
+
+//
+pub async fn compress_all(app: tauri::AppHandle, file_paths: Vec<String>) {
+    let mut videofiles = vec![];
+    let mut imagefiles = vec![];
+
+    for file in file_paths {
+        let ext = file.split('.').last().unwrap();
+        if VIDEO_EXTENSIONS.contains(&ext) {
+            videofiles.push(file);
+        } else if IMAGE_EXTENSIONS.contains(&ext) {
+            imagefiles.push(file);
+        }
+    }
+
+    if videofiles.len() > 0 {
+        compress_all_videos(app.clone(), videofiles).await;
+    }
+
+    if (imagefiles.len() > 0) {
+        compress_all_images(app.clone(), imagefiles).await;
+    }
 }
 
-#[tauri::command]
-pub async fn compress_video() {}
-
 #[tauri::command(async)]
-pub async fn get_duration(app: tauri::AppHandle, video_path: &str) -> Result<f32, String> {
+pub async fn get_duration(_app: tauri::AppHandle, video_path: &str) -> Result<f32, String> {
     if !Path::exists(Path::new(video_path)) {
         return Err("Path not found".to_owned().to_string());
     }

@@ -8,18 +8,13 @@ use ffmpeg_sidecar::{
     paths::sidecar_dir,
     version::ffmpeg_version,
 };
-use std::{
-    cmp::min,
-    io::{Read, Seek, SeekFrom},
-    path::PathBuf,
-    // process::{Command, Stdio},
-};
 use tauri::http;
-use tauri::http::{HttpRange, ResponseBuilder};
 
+mod domain;
 mod host;
 mod localhost;
 mod media;
+mod menu;
 mod sanity;
 mod utils;
 
@@ -63,7 +58,10 @@ fn main() {
 
     handle_ffmpeg_installation().expect("Failed to install FFmpeg");
 
+    let context = tauri::generate_context!();
+
     tauri::Builder::default()
+        .menu(menu::build_menu(&context))
         .setup(|app| {
             let port = utils::get_tcp_port();
             let token = utils::get_random_access_token();
@@ -86,6 +84,6 @@ fn main() {
             utils::frontend_token,
             utils::frontend_port,
         ])
-        .run(tauri::generate_context!())
+        .run(context)
         .expect("Error while running tauri application");
 }
